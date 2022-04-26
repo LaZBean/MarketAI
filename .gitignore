@@ -1,3 +1,11 @@
+#Ignore personal info
+api_key.ini
+
+#Downloaded data
+#data/
+
+
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
