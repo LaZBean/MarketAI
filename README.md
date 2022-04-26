@@ -1,2 +1,2 @@
 # MarketAI
-My attempt to make an environment for learning AI
+My attempt to create an AI learning environment
