@@ -1,4 +1,9 @@
+
+from distutils.log import debug
+from email.errors import NonPrintableDefect
+import utils
 from math import log10
+import string
 from pandas.core import series
 from pandas.core.frame import DataFrame
 import pygame
@@ -9,6 +14,8 @@ import numpy as np
 import csv
 
 from pygame.rect import Rect
+
+
 
 
 #Colors
@@ -42,25 +49,119 @@ L = 24
 class GraphicObject():
 
   parent:pygame.Surface = None
+  rect:pygame.Rect = pygame.Rect(0,0,50,50)
+
+  anchor_min:pygame.Vector2 = pygame.Vector2(0,1)
+  anchor_max:pygame.Vector2 = pygame.Vector2(0,1)
+  pivot:pygame.Vector2 = pygame.Vector2(0,0)
 
   def __init__(self, _parent=None):
     super().__init__()
-    parent = _parent
+    self.parent = _parent
+    
   
-  def Draw(self, screen):
-    #print("draw")
+  def Draw(self, screen, offset:pygame.Vector2=pygame.Vector2(0,0), scale:pygame.Vector2=pygame.Vector2(1,1)):
     pass
 
+  def isMouseOver(self):
+    mpos = pygame.mouse.get_pos()
+    return bool(self.rect.collidepoint(mpos))
 
 
+
+#OBJECTS
+objects:GraphicObject = []
+
+
+#TEXT
+class Text(GraphicObject):
+
+  def __init__(self, _text:string="", _parent=None):
+    super().__init__()
+    self.text = _text
+    self.font_size = 16
+    self.font = pygame.font.SysFont("Arial", self.font_size)
+    self.color = (255,255,255,255)
+    self.background_color = (76,175,80, 100)
+    self.background_text_color = None
+  
+  def Draw(self, screen, offset:pygame.Vector2=pygame.Vector2(0,0), scale:pygame.Vector2=pygame.Vector2(1,1)):
+
+    #self.rect = Rect(100, 100, screen.get_width()-200, screen.get_height()-300)
+
+    surface = pygame.Surface((self.rect.w, self.rect.h), pygame.SRCALPHA)
+    surface.fill(self.background_color)
+    screen.blit(surface, (self.rect.x, self.rect.y))
+
+    text_surface = self.font.render(self.text, True, self.color, self.background_text_color)
+    
+    offs = pygame.Vector2(
+      (self.rect.w/2 - text_surface.get_rect().w/2),
+      (self.rect.h/2 - text_surface.get_rect().h/2))
+    
+    screen.blit(text_surface, (self.rect.x+offs.x, self.rect.y+offs.y))
+    pass
+
+def a():
+  print("GFG")
+
+#BUTTON
+class Button(GraphicObject):
+  
+  #_color = None
+  _pressed = False
+
+  def __init__(self, _parent=None):
+    super().__init__()
+    self.color:pygame.Color = pygame.Color("#242B2E")
+    self.color_hover:pygame.Color = pygame.Color("#758283") 
+    self.color_active:pygame.Color = pygame.Color("#E07C24")
+
+    self._color = self.color
+    self.command = None
+
+    
+  
+  def Draw(self, screen, offset:pygame.Vector2=pygame.Vector2(0,0), scale:pygame.Vector2=pygame.Vector2(1,1)):
+    
+    #self.rect = Rect(100, 100, screen.get_width()-200, screen.get_height()-300)
+
+    #INPUT UPDATE
+    c = self.color
+    if(self.isMouseOver()):
+      c = self.color_hover
+      
+      for event in pygame.event.get():
+        if event.type == pygame.MOUSEBUTTONDOWN and event.button==1:
+          self._pressed = True
+        if event.type == pygame.MOUSEBUTTONUP and event.button==1:
+          self._pressed = False
+          #CLICK
+          if(self.command!=None):
+            self.command()
+    else:
+      if(self._pressed):
+        self._pressed = False
+
+    if(self._pressed):
+      c = self.color_active
+
+    #DRAW
+    self._color = utils.LerpColor(self._color, c, 0.2)
+
+    surface = pygame.Surface((self.rect.w, self.rect.h), pygame.SRCALPHA)
+    surface.fill(self._color)
+
+    screen.blit(surface, (self.rect.x, self.rect.y))
+    pass
+
+#WINDOW
 class Window(GraphicObject):
 
-  dirty:bool = True
-  focus:bool = False
   order:int = 0
-  rect:pygame.Rect = pygame.Rect(100,100,400,400)
+  
 
-  showRect:pygame.Rect = pygame.Rect(0,0,10000,50000)
+  showRect:pygame.Rect = pygame.Rect(0,0,10000,10000)
   content:GraphicObject = []
 
   selected:bool = False
@@ -68,16 +169,13 @@ class Window(GraphicObject):
   def __init__(self):
     super().__init__()
 
-  def Draw(self, screen:pygame.Surface):
-    
-    self.rect = Rect(100, 100, screen.get_width()-200, screen.get_height()-200)
+  def Draw(self, screen:pygame.Surface, offset:pygame.Vector2=pygame.Vector2(0,0), scale:pygame.Vector2=pygame.Vector2(1,1)):
+    #
+    self.rect = Rect(100, 100, screen.get_width()-200, screen.get_height()-300)
+
     surface = pygame.Surface((self.rect.w, self.rect.h), pygame.SRCALPHA)
     surface.fill(windowBackgroundColor)
 
-    mpos = pygame.mouse.get_pos()
-    self.selected = self.rect.collidepoint(mpos)
-    #if(self.selected):
-      #print("selected")
 
 
     #Grid Scale
@@ -93,11 +191,15 @@ class Window(GraphicObject):
     
     
 
-    for x in range(0, int(self.showRect.w / xl)):
-      pygame.draw.line(surface, backgroundColor, ((x*xl+self.showRect.x)*scaleW, 0), ((x*xl+self.showRect.x)*scaleW, h))
+    for xx in range(0, int(self.showRect.w / xl)):
+      a = ((xx*xl+self.showRect.x)*scaleW, 0)
+      b = ((xx*xl+self.showRect.x)*scaleW, h)
+      pygame.draw.line(surface, backgroundColor, a, b)
 
-    for y in range(0, int(self.showRect.h / yl)):
-      pygame.draw.line(surface, backgroundColor, (0, (y*yl+self.showRect.y)*scaleH), (w, (y*yl+self.showRect.y)*scaleH))
+    for yy in range(0, int(self.showRect.h / yl)):
+      a = (0, (self.showRect.h-yy*yl+self.showRect.y)*scaleH)
+      b = (w, (self.showRect.h-yy*yl+self.showRect.y)*scaleH)
+      pygame.draw.line(surface, backgroundColor, a, b)
 
     #Draw other window`s content
     for e in self.content:
@@ -129,7 +231,7 @@ class Plot(GraphicObject):
       self.content.append(candle)
     
 
-  def Draw(self, screen:pygame.Surface, offset:pygame.Vector2, scale:pygame.Vector2):
+  def Draw(self, screen:pygame.Surface, offset:pygame.Vector2=pygame.Vector2(0,0), scale:pygame.Vector2=pygame.Vector2(1,1)):
     pygame.draw.rect(screen, candleGreenColor, pygame.Rect((300+offset.x)*scale.x, screen.get_height() - (200+500-offset.y)*scale.y, 500*scale.x, 500*scale.y))
 
     
@@ -152,7 +254,7 @@ class Candle(GraphicObject):
     self.indx = i
     self.data = _data
 
-  def Draw(self, screen:pygame.Surface, offset:pygame.Vector2, scale:pygame.Vector2):
+  def Draw(self, screen:pygame.Surface, offset:pygame.Vector2=pygame.Vector2(0,0), scale:pygame.Vector2=pygame.Vector2(1,1)):
     
     w, h = screen.get_size()
 
@@ -176,8 +278,9 @@ class Candle(GraphicObject):
     y2 = (h-(high/dif) * h)
 
     #pygame.draw.line(screen, color,(self.indx*2, y1),(self.indx*2, y2))
-
-    pygame.draw.line(screen, color, ((self.indx * 50+offset.x)*scale.x, screen.get_height() - (low-offset.y)*scale.y), ((self.indx * 50+offset.x)*scale.x, screen.get_height() - (high-offset.y)*scale.y) )
+    x = ((self.indx * 50+offset.x)*scale.x, screen.get_height() - (low-offset.y)*scale.y)
+    y = ((self.indx * 50+offset.x)*scale.x, screen.get_height() - (high-offset.y)*scale.y)
+    pygame.draw.line(screen, color, x, y )
 
     
     

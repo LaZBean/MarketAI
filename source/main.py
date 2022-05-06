@@ -1,17 +1,15 @@
+#pip install pandas
 #pip install yfinance
 #pip install yahoofinancials
 #pip install pygame
 #pip install python-binance
 
+
 #Импорт библиотек
 from pandas.core.series import Series
-import yfinance as yf
-import yahoofinancials
-#import investpy
 
 import threading
 import pandas as pd
-#import hvplot.pandas
 import numpy as np 
 
 from datetime import datetime
@@ -19,6 +17,7 @@ from datetime import datetime
 import pygame
 
 import app
+import utils
 import input
 import graphics
 import datamanager
@@ -30,9 +29,6 @@ import csv
 import json
 from io import StringIO
 
-#import matplotlib.pyplot as plt
-#import plotly.graph_objs as go
-#from matplotlib.widgets import Button
 
 from datetime import timedelta, datetime
 from dateutil import parser
@@ -42,42 +38,12 @@ import configparser
 
 
 
-
-# Подставьте данные для получения визуализации
-# Сокращенное название акции можно найти на https://ru.investing.com/equities/ и https://finance.yahoo.com
-#crypto = 'BTC-USD'
-
-#start = datetime(2017, 9, 1)
-#end = datetime(2017, 12, 31)
-
-#Read data YFINANCE
-#current_date = str(date.today().day) + '/'+ str(date.today().month) +'/' + str(date.today().year)
-#try:
-#	df = yf.download(tickers='BTC-USD', period = '14d', interval = '1h')
-#	df = investpy.get_crypto_historical_data(crypto = crypto,from_date='01/01/2020',to_date=current_date)
-#except:
-#	print("Can`t load data")
-
-#df.to_csv('data/BTC-USD.csv')
-
-
 #print(df)
 
 #fear and greed
 #get_fng_index = "https://api.alternative.me/fng/"
 #url = get_fng_index + "?limit=2000&format=csv&date_format=us"
 #urllib.request.urlretrieve(url, 'data/btc_fng.csv')
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -93,17 +59,29 @@ def DownloadData():
 
 def main():
 	
-	global isRunning
 	global width, height
 
 	#data1h = pd.read_csv('data/BTCUSDT/BTCUSDT-1h-data.csv')
 	df = pd.read_csv('data/BTCUSDT/BTCUSDT-1d-data.csv')
 	#print(df)
 	#Init Scenario
+	
+	
+
 	window = graphics.Window()
 	plot = graphics.Plot(df)
+	button1 = graphics.Button()
+	button1.rect = graphics.Rect(20,20,100,30)
+
+	text1 = graphics.Text("Hello World")
+	text1.rect = graphics.Rect(200,20,100,30)
+
 	window.content.append(plot)
-	
+	#window.content.append(button1)
+
+	graphics.objects.append(window)
+	graphics.objects.append(button1)
+	graphics.objects.append(text1)
 
 	#d = df.iloc[-1]
 	#print(d)
@@ -122,7 +100,7 @@ def main():
 	#dl = d = df.iloc[start+steps]
 	#print(dl)
 
-	api_key_path = 'api_key.INI'
+	api_key_path = 'api_key.ini'
 
 	#if not os.path.exists(api_key_path):
 	#	f = open(api_key_path,"w")
@@ -160,9 +138,41 @@ def main():
 		
 		
 		#INPUT
-		input.Update()
+		mpos = pygame.mouse.get_pos()
 
-		
+		for event in pygame.event.get():
+			if event.type == pygame.WINDOWRESIZED:
+				print("Resized")
+				w, h = pygame.display.get_surface().get_size()
+
+			if event.type == pygame.QUIT:
+				print("QUIT")
+				app.isRunning = False
+			elif event.type == pygame.KEYDOWN:
+				keys = pygame.key.get_pressed()
+				if event.key == pygame.K_r and keys[pygame.K_l]:
+					print("Hi")
+				elif event.key == pygame.K_l:
+					print('bye')
+				
+
+			elif event.type == pygame.MOUSEWHEEL:
+				print(event.x, event.y)
+				if(window.isMouseOver()):
+					window.showRect.w += -event.y*100
+					window.showRect.h += -event.y*100
+			elif event.type == pygame.MOUSEBUTTONUP:
+				print("MouseUp")
+			elif event.type == pygame.MOUSEBUTTONDOWN and event.button==1:
+				print("MouseDown")
+			elif event.type == pygame.MOUSEMOTION:
+				pass
+
+		#input.Update()
+
+		if(button1.isMouseOver()):
+			
+			pass
 
 		pressed = pygame.key.get_pressed()
 		if pressed[pygame.K_q]:
@@ -183,6 +193,8 @@ def main():
 		if pressed[pygame.K_s]:
 			window.showRect.y = window.showRect.y-100
 
+		
+
 
 		if pressed[pygame.K_f]:
 			DownloadData()
@@ -202,11 +214,16 @@ def main():
 		#	d = df.loc[r]
 		#	graphics.DrawCandle(screen,d["Open"], d["High"], d["Low"], d["Close"], d)
 
-		window.Draw(screen)
+		#DRAW GRAPHICS
+		for o in graphics.objects:
+			o.Draw(screen)
+		
+		#window.Draw(screen)
 	
-		##
+		#
 		clock.tick(60)
 		pygame.display.flip()
+		pass
 
 #Init Program
 
@@ -218,10 +235,10 @@ pygame.display.set_icon(graphics.icon)
 
 width, height = 800, 600
 
-screen = pygame.display.set_mode((width, height), pygame.RESIZABLE)
+screen = pygame.display.set_mode((width, height), flags=pygame.RESIZABLE)	#|pygame.NOFRAME
 clock = pygame.time.Clock()
 
-font = pygame.font.SysFont("Arial", 16)
+pygame.font.init()
 
 main()
 

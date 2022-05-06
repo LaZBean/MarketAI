@@ -22,9 +22,9 @@ def Update():
                 print("Hi")
             elif event.key == pygame.K_l:
                 print('bye')
-        elif event.type == pygame.MOUSEWHEEL:
-            print(event.x, event.y)
-        elif event.type == pygame.MOUSEBUTTONUP:
-            print("MouseUp")
+        #elif event.type == pygame.MOUSEWHEEL:
+        #    print(event.x, event.y)
+        #elif event.type == pygame.MOUSEBUTTONUP:
+        #    print("MouseUp")
     
     pass
