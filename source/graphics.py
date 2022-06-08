@@ -102,8 +102,6 @@ class Text(GraphicObject):
     screen.blit(text_surface, (self.rect.x+offs.x, self.rect.y+offs.y))
     pass
 
-def a():
-  print("GFG")
 
 #BUTTON
 class Button(GraphicObject):
@@ -232,8 +230,8 @@ class Plot(GraphicObject):
     
 
   def Draw(self, screen:pygame.Surface, offset:pygame.Vector2=pygame.Vector2(0,0), scale:pygame.Vector2=pygame.Vector2(1,1)):
-    pygame.draw.rect(screen, candleGreenColor, pygame.Rect((300+offset.x)*scale.x, screen.get_height() - (200+500-offset.y)*scale.y, 500*scale.x, 500*scale.y))
 
+    pygame.draw.rect(screen, candleGreenColor, pygame.Rect((300+offset.x)*scale.x, screen.get_height() - (200+500-offset.y)*scale.y, 500*scale.x, 500*scale.y))
     
 
     for e in self.content:
@@ -281,6 +279,19 @@ class Candle(GraphicObject):
     x = ((self.indx * 50+offset.x)*scale.x, screen.get_height() - (low-offset.y)*scale.y)
     y = ((self.indx * 50+offset.x)*scale.x, screen.get_height() - (high-offset.y)*scale.y)
     pygame.draw.line(screen, color, x, y )
+
+
+    
+    ww = 30
+    hh = abs(close-open)
+    xx = (self.indx * 50+offset.x) - (ww/2)
+    yy = (open-offset.y + hh)
+
+    if open > close:
+      yy = (close-offset.y + hh)
+    
+
+    pygame.draw.rect(screen, color, pygame.Rect(xx*scale.x, screen.get_height() - yy*scale.y, ww*scale.x, (hh)*scale.y))
 
     
     
